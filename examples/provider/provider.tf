@@ -1,3 +1,5 @@
 provider "scaffolding" {
-  # example configuration here
+  url      = "https://localhost:9200"
+  username = "elastic"
+  password = "password"
 }

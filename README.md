@@ -1,8 +1,6 @@
-# Terraform Provider Scaffolding (Terraform Plugin Framework)
+# Terraform Provider Elasticsearch Security
 
 _This repository is built on the [Terraform Plugin Framework](https://github.com/hashicorp/terraform-plugin-framework)._
-
-Once you've written your provider, you'll want to [publish it on the Terraform Registry](https://www.terraform.io/docs/registry/providers/publishing.html) so that others can use it.
 
 ## Requirements
 
