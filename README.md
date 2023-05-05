@@ -1,16 +1,6 @@
 # Terraform Provider Scaffolding (Terraform Plugin Framework)
 
-_This template repository is built on the [Terraform Plugin Framework](https://github.com/hashicorp/terraform-plugin-framework). The template repository built on the [Terraform Plugin SDK](https://github.com/hashicorp/terraform-plugin-sdk) can be found at [terraform-provider-scaffolding](https://github.com/hashicorp/terraform-provider-scaffolding). See [Which SDK Should I Use?](https://www.terraform.io/docs/plugin/which-sdk.html) in the Terraform documentation for additional information._
-
-This repository is a *template* for a [Terraform](https://www.terraform.io) provider. It is intended as a starting point for creating Terraform providers, containing:
-
-- A resource and a data source (`internal/provider/`),
-- Examples (`examples/`) and generated documentation (`docs/`),
-- Miscellaneous meta files.
-
-These files contain boilerplate code that you will need to edit to create your own Terraform provider. Tutorials for creating Terraform providers can be found on the [HashiCorp Learn](https://learn.hashicorp.com/collections/terraform/providers-plugin-framework) platform. _Terraform Plugin Framework specific guides are titled accordingly._
-
-Please see the [GitHub template repository documentation](https://help.github.com/en/github/creating-cloning-and-archiving-repositories/creating-a-repository-from-a-template) for how to create a new repository from this template on GitHub.
+_This repository is built on the [Terraform Plugin Framework](https://github.com/hashicorp/terraform-plugin-framework)._
 
 Once you've written your provider, you'll want to [publish it on the Terraform Registry](https://www.terraform.io/docs/registry/providers/publishing.html) so that others can use it.
 
@@ -45,7 +35,72 @@ Then commit the changes to `go.mod` and `go.sum`.
 
 ## Using the provider
 
-Fill this in for each provider
+```hcl
+terraform {
+  required_version = ">= 1.4.6"
+
+  required_providers {
+    essecurity = {
+      source  = "ka-nabellinc/elasticsearch-security"
+      version = "~> 1.0"
+    }
+
+    elasticsearch = {
+      source  = "phillbaker/elasticsearch"
+      version = "1.6.3"
+    }
+  }
+}
+
+locals {
+  url = "https://localhost:9200"
+  username = "elastic"
+  password = "elastic"
+}
+
+provider "elasticsearch" {
+  url      = local.url
+  username = local.username
+  password = local.password
+}
+
+resource "elasticsearch_index" "sample" {
+  name     = "sample"
+
+  force_destroy      = true
+  number_of_shards   = 1
+  number_of_replicas = 1
+  mappings           = file("mapping.json")
+
+  lifecycle {
+    ignore_changes = [
+      mappings
+    ]
+  }
+}
+
+provider "essecurity" {
+  url      = local.url
+  username = local.username
+  password = local.password
+}
+
+resource "essecurity_api_key" "sample" {
+  name = "sample"
+  role_descriptors = [
+    {
+      name = "role-a"
+      cluster = ["all"]
+      indices = [
+        {
+          names = ["sample"]
+          privileges = ["read", "write"]
+        }
+      ]
+    }
+  ]
+}
+```
 
 ## Developing the Provider
 
@@ -62,3 +117,9 @@ In order to run the full suite of Acceptance tests, run `make testacc`.
 ```shell
 make testacc
 ```
+
+## Local Development
+
+Reference: https://developer.hashicorp.com/terraform/plugin/debugging
+
+- Create `~/.terraformrc`
