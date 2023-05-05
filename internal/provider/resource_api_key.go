@@ -77,7 +77,7 @@ func (r *ApiKeyResource) Schema(ctx context.Context, req resource.SchemaRequest,
 			},
 			"role_descriptors": schema.SetNestedAttribute{
 				MarkdownDescription: "Role Descriptors for the API Key",
-				Optional:            true,
+				Required:            true,
 				NestedObject: schema.NestedAttributeObject{
 					Attributes: map[string]schema.Attribute{
 						"name": schema.StringAttribute{
