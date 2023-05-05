@@ -2,7 +2,10 @@ package provider
 
 import (
 	"context"
+	"crypto/tls"
 	"net/http"
+
+	"github.com/elastic/go-elasticsearch/v8"
 
 	"github.com/hashicorp/terraform-plugin-framework/datasource"
 	"github.com/hashicorp/terraform-plugin-framework/provider"
@@ -11,40 +14,50 @@ import (
 	"github.com/hashicorp/terraform-plugin-framework/types"
 )
 
-// Ensure ScaffoldingProvider satisfies various provider interfaces.
-var _ provider.Provider = &ScaffoldingProvider{}
+// Ensure ElasticsearchSecurityProvider satisfies various provider interfaces.
+var _ provider.Provider = &ElasticsearchSecurityProvider{}
 
-// ScaffoldingProvider defines the provider implementation.
-type ScaffoldingProvider struct {
+// ElasticsearchSecurityProvider defines the provider implementation.
+type ElasticsearchSecurityProvider struct {
 	// version is set to the provider version on release, "dev" when the
 	// provider is built and ran locally, and "test" when running acceptance
 	// testing.
 	version string
 }
 
-// ScaffoldingProviderModel describes the provider data model.
-type ScaffoldingProviderModel struct {
-	Endpoint types.String `tfsdk:"endpoint"`
+// ElasticsearchSecurityProviderModel describes the provider data model.
+type ElasticsearchSecurityProviderModel struct {
+	Url      types.String `tfsdk:"url"`
+	Username types.String `tfsdk:"username"`
+	Password types.String `tfsdk:"password"`
 }
 
-func (p *ScaffoldingProvider) Metadata(ctx context.Context, req provider.MetadataRequest, resp *provider.MetadataResponse) {
-	resp.TypeName = "scaffolding"
+func (p *ElasticsearchSecurityProvider) Metadata(ctx context.Context, req provider.MetadataRequest, resp *provider.MetadataResponse) {
+	resp.TypeName = "essecurity"
 	resp.Version = p.version
 }
 
-func (p *ScaffoldingProvider) Schema(ctx context.Context, req provider.SchemaRequest, resp *provider.SchemaResponse) {
+func (p *ElasticsearchSecurityProvider) Schema(ctx context.Context, req provider.SchemaRequest, resp *provider.SchemaResponse) {
 	resp.Schema = schema.Schema{
 		Attributes: map[string]schema.Attribute{
-			"endpoint": schema.StringAttribute{
-				MarkdownDescription: "Example provider attribute",
-				Optional:            true,
+			"url": schema.StringAttribute{
+				MarkdownDescription: "Elasticsearch URL",
+				Required:            true,
+			},
+			"username": schema.StringAttribute{
+				MarkdownDescription: "Username to use to connect to elasticsearch using basic auth",
+				Required:            true,
+			},
+			"password": schema.StringAttribute{
+				MarkdownDescription: "Password to use to connect to elasticsearch using basic auth",
+				Required:            true,
 			},
 		},
 	}
 }
 
-func (p *ScaffoldingProvider) Configure(ctx context.Context, req provider.ConfigureRequest, resp *provider.ConfigureResponse) {
-	var data ScaffoldingProviderModel
+func (p *ElasticsearchSecurityProvider) Configure(ctx context.Context, req provider.ConfigureRequest, resp *provider.ConfigureResponse) {
+	var data ElasticsearchSecurityProviderModel
 
 	resp.Diagnostics.Append(req.Config.Get(ctx, &data)...)
 
@@ -52,30 +65,40 @@ func (p *ScaffoldingProvider) Configure(ctx context.Context, req provider.Config
 		return
 	}
 
-	// Configuration values are now available.
-	// if data.Endpoint.IsNull() { /* ... */ }
+	config := elasticsearch.Config{
+		Addresses: []string{data.Url.ValueString()},
+		Username:  data.Username.ValueString(),
+		Password:  data.Password.ValueString(),
+		Transport: &http.Transport{
+			TLSClientConfig: &tls.Config{
+				InsecureSkipVerify: true,
+			},
+		},
+	}
 
-	// Example client configuration for data sources and resources
-	client := http.DefaultClient
+	client, err := elasticsearch.NewClient(config)
+	if err != nil {
+		resp.Diagnostics.AddError("Client initialization failed", "Failed to create Elasticearch client")
+		return
+	}
+
 	resp.DataSourceData = client
 	resp.ResourceData = client
 }
 
-func (p *ScaffoldingProvider) Resources(ctx context.Context) []func() resource.Resource {
+func (p *ElasticsearchSecurityProvider) Resources(ctx context.Context) []func() resource.Resource {
 	return []func() resource.Resource{
-		NewExampleResource,
+		NewApikeyResource,
 	}
 }
 
-func (p *ScaffoldingProvider) DataSources(ctx context.Context) []func() datasource.DataSource {
-	return []func() datasource.DataSource{
-		NewExampleDataSource,
-	}
+func (p *ElasticsearchSecurityProvider) DataSources(ctx context.Context) []func() datasource.DataSource {
+	return []func() datasource.DataSource{}
 }
 
 func New(version string) func() provider.Provider {
 	return func() provider.Provider {
-		return &ScaffoldingProvider{
+		return &ElasticsearchSecurityProvider{
 			version: version,
 		}
 	}
