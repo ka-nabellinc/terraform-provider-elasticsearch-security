@@ -120,4 +120,14 @@ make testacc
 
 Reference: https://developer.hashicorp.com/terraform/plugin/debugging
 
-- Create `~/.terraformrc`
+Create `~/.terraformrc` file.
+
+```.terraformrc
+provider_installation {
+  dev_overrides {
+    "ka-nabellinc/elasticsearch-security" = "~/go/bin"
+  }
+
+  direct {}
+}
+```
